@@ -95,9 +95,13 @@ export default function App() {
   const carregarDados = () => {
     setLoading(true);
     setErro(null);
-    fetch(SHEETS_URL)
-      .then(r => r.json())
-      .then(json => {
+
+    const callbackName = "cactusCallback_" + Date.now();
+    const script = document.createElement("script");
+    script.src = SHEETS_URL + "?callback=" + callbackName;
+
+    window[callbackName] = (json) => {
+      try {
         const cidades = (json.cidades || []).map((c, i) => ({
           id: i + 1,
           cidade:           c.cidade || "",
@@ -116,11 +120,22 @@ export default function App() {
         setData(cidades);
         setLastUpdate(new Date().toLocaleTimeString("pt-BR"));
         setLoading(false);
-      })
-      .catch(() => {
-        setErro("Não foi possível carregar os dados da planilha.");
+      } catch {
+        setErro("Erro ao processar os dados.");
         setLoading(false);
-      });
+      }
+      delete window[callbackName];
+      document.body.removeChild(script);
+    };
+
+    script.onerror = () => {
+      setErro("Não foi possível carregar os dados da planilha.");
+      setLoading(false);
+      delete window[callbackName];
+      document.body.removeChild(script);
+    };
+
+    document.body.appendChild(script);
   };
 
   useEffect(() => { carregarDados(); }, []);
