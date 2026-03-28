@@ -1,4 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+
+const SHEETS_URL = "https://script.google.com/a/macros/associacaocactus.com.br/s/AKfycbxRaNGyDAorF9sUQz1nBsKGcpGY22V1KccLa7et7MKEH3-1x6LUQ7TRPTjcDaW8hCA7/exec";
 
 const STATUS_CONFIG = {
   "ALOCADO":      { color: "#39B54A", bg: "#EAF3DE", label: "Alocado" },
@@ -13,28 +15,6 @@ const STATUS_CONFIG = {
   "ONLINE":       { color: "#2D54C9", bg: "#E6F1FB", label: "Online" },
   "FÍSICA":       { color: "#884FCB", bg: "#EEEDFE", label: "Física" },
 };
-
-const INITIAL_DATA = [
-  { id:1,  cidade:"Pereiro",            uf:"CE", consultor:"André",   gestor:"ALOCADO",  embarque:"REALIZADO",  lms:"CONCLUÍDO",    avSond:"AGENDADO",    avSondTipo:"ONLINE",  matrícula:100, saldo:0,       vigência:"29/10/2026" },
-  { id:2,  cidade:"Açailândia",         uf:"MA", consultor:"Fernando",gestor:"ALOCADO",  embarque:"PENDENTE",   lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"FÍSICA",  matrícula:100, saldo:-3500,   vigência:"20/05/2026" },
-  { id:3,  cidade:"Aracruz",            uf:"ES", consultor:"Mari",    gestor:"ALOCADO",  embarque:"AGENDADO",   lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"ONLINE",  matrícula:100, saldo:0,       vigência:"18/11/2026" },
-  { id:4,  cidade:"Guaraciaba do Norte",uf:"CE", consultor:"Fernando",gestor:"ALOCADO",  embarque:"PENDENTE",   lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"FÍSICA",  matrícula:0,   saldo:-3500,   vigência:"05/06/2026" },
-  { id:5,  cidade:"Iguatu",             uf:"CE", consultor:"André",   gestor:"ALOCADO",  embarque:"PENDENTE",   lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"",        matrícula:0,   saldo:-3500,   vigência:"14/05/2026" },
-  { id:6,  cidade:"Madalena",           uf:"CE", consultor:"André",   gestor:"ALOCADO",  embarque:"REALIZADO",  lms:"SOLICITADO",   avSond:"PENDENTE",    avSondTipo:"FÍSICA",  matrícula:100, saldo:-3500,   vigência:"26/08/2026" },
-  { id:7,  cidade:"Pastos Bons",        uf:"MA", consultor:"Fernando",gestor:"ALOCADO",  embarque:"REALIZADO",  lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"FÍSICA",  matrícula:0,   saldo:-3500,   vigência:"06/05/2026" },
-  { id:8,  cidade:"Pentecostes",        uf:"CE", consultor:"André",   gestor:"ALOCADO",  embarque:"PENDENTE",   lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"FÍSICA",  matrícula:0,   saldo:0,       vigência:"" },
-  { id:9,  cidade:"Pires Ferreira",     uf:"CE", consultor:"Mari",    gestor:"ALOCADO",  embarque:"PENDENTE",   lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"FÍSICA",  matrícula:100, saldo:-3500,   vigência:"07/08/2026" },
-  { id:10, cidade:"São Bento",          uf:"PB", consultor:"Mari",    gestor:"ALOCADO",  embarque:"AGENDADO",   lms:"CONCLUÍDO",    avSond:"FINALIZADA",  avSondTipo:"ONLINE",  matrícula:0,   saldo:-3500,   vigência:"08/04/2026" },
-  { id:11, cidade:"São José dos Ramos", uf:"PB", consultor:"Fernando",gestor:"ALOCADO",  embarque:"AGENDADO",   lms:"POVOANDO",     avSond:"AGENDADO",    avSondTipo:"FÍSICA",  matrícula:100, saldo:-3500,   vigência:"26/08/2026" },
-  { id:12, cidade:"Caldeirão Grande",   uf:"BA", consultor:"Fernando",gestor:"ALOCADO",  embarque:"AGENDADO",   lms:"POVOANDO",     avSond:"PENDENTE",    avSondTipo:"FÍSICA",  matrícula:0,   saldo:0,       vigência:"" },
-  { id:13, cidade:"Maranguape",         uf:"CE", consultor:"André",   gestor:"ALOCADO",  embarque:"PENDENTE",   lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"",        matrícula:0,   saldo:0,       vigência:"" },
-  { id:14, cidade:"Redenção",           uf:"CE", consultor:"Marcos",  gestor:"PENDENTE", embarque:"PENDENTE",   lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"",        matrícula:0,   saldo:0,       vigência:"" },
-  { id:15, cidade:"Ubajara",            uf:"CE", consultor:"André",   gestor:"ALOCADO",  embarque:"PENDENTE",   lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"",        matrícula:0,   saldo:0,       vigência:"" },
-  { id:16, cidade:"Capistrano",         uf:"CE", consultor:"Marcos",  gestor:"ALOCADO",  embarque:"PENDENTE",   lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"",        matrícula:0,   saldo:0,       vigência:"" },
-  { id:17, cidade:"Acaraú",             uf:"CE", consultor:"Fernando",gestor:"ALOCADO",  embarque:"AGENDADO",   lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"FÍSICA",  matrícula:0,   saldo:0,       vigência:"" },
-  { id:18, cidade:"Bela Cruz",          uf:"CE", consultor:"Fernando",gestor:"ALOCADO",  embarque:"AGENDADO",   lms:"POVOANDO",     avSond:"PENDENTE",    avSondTipo:"FÍSICA",  matrícula:0,   saldo:0,       vigência:"" },
-  { id:19, cidade:"Ipojuca",            uf:"PE", consultor:"Mariene", gestor:"ALOCADO",  embarque:"REALIZADO",  lms:"NÃO INICIADO", avSond:"PENDENTE",    avSondTipo:"",        matrícula:0,   saldo:0,       vigência:"" },
-];
 
 const STEPS = ["gestor","embarque","lms","avSond"];
 const STATUS_OPTS = ["ALOCADO","PENDENTE","REALIZADO","AGENDADO","CONCLUÍDO","NÃO INICIADO","SOLICITADO","POVOANDO","FINALIZADA"];
@@ -60,6 +40,22 @@ function Badge({ value }) {
   );
 }
 
+function SaudeBadge({ value }) {
+  const cfg = {
+    "SAUDÁVEL":     { bg:"#D4EDDA", color:"#155724" },
+    "ATENÇÃO":      { bg:"#FFF3CD", color:"#856404" },
+    "CRÍTICO":      { bg:"#FDECEA", color:"#A32D2D" },
+    "INADIMPLENTE": { bg:"#EEEDFE", color:"#3C3489" },
+  };
+  if (!value) return <span style={{color:"#aaa",fontSize:12}}>—</span>;
+  const c = cfg[value] || { bg:"#eee", color:"#888" };
+  return (
+    <span style={{ display:"inline-block", padding:"2px 8px", borderRadius:4, fontSize:11, fontWeight:500, background:c.bg, color:c.color, whiteSpace:"nowrap" }}>
+      {value}
+    </span>
+  );
+}
+
 function ProgressBar({ data }) {
   const done = STEPS.filter(s => ["REALIZADO","CONCLUÍDO","ALOCADO","FINALIZADA","POVOANDO"].includes(data[s])).length;
   const pct = Math.round((done/STEPS.length)*100);
@@ -74,22 +70,6 @@ function ProgressBar({ data }) {
   );
 }
 
-function EditableCell({ value, options, onChange }) {
-  const [editing, setEditing] = useState(false);
-  if (editing) return (
-    <select autoFocus value={value} onBlur={()=>setEditing(false)}
-      onChange={e=>{onChange(e.target.value);setEditing(false);}}
-      style={{fontSize:12,border:"1px solid #ccc",borderRadius:4,padding:"2px 4px",background:"white"}}>
-      {options.map(o=><option key={o} value={o}>{o}</option>)}
-    </select>
-  );
-  return (
-    <span onClick={()=>setEditing(true)} title="Clique para editar" style={{cursor:"pointer"}}>
-      <Badge value={value}/>
-    </span>
-  );
-}
-
 function StatCard({ label, value, color, sub }) {
   return (
     <div style={{ background:"#f5f5f3", borderRadius:8, padding:"12px 16px", minWidth:100 }}>
@@ -101,7 +81,10 @@ function StatCard({ label, value, color, sub }) {
 }
 
 export default function App() {
-  const [data, setData] = useState(INITIAL_DATA);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(null);
   const [view, setView] = useState("cidades");
   const [filterUF, setFilterUF] = useState("Todos");
   const [filterConsultor, setFilterConsultor] = useState("Todos");
@@ -109,12 +92,50 @@ export default function App() {
   const [sortCol, setSortCol] = useState("cidade");
   const [sortDir, setSortDir] = useState("asc");
 
+  const carregarDados = () => {
+    setLoading(true);
+    setErro(null);
+    fetch(SHEETS_URL)
+      .then(r => r.json())
+      .then(json => {
+        const cidades = (json.cidades || []).map((c, i) => ({
+          id: i + 1,
+          cidade:           c.cidade || "",
+          uf:               c.uf || "",
+          consultor:        c.consultor || "",
+          gestor:           c.gestor || "ALOCADO",
+          embarque:         c.embarque || "PENDENTE",
+          lms:              c.lms || "NÃO INICIADO",
+          avSond:           c.avSond || "PENDENTE",
+          avSondTipo:       c.avSondTipo || "",
+          saldo:            parseFloat(c.saldo) || 0,
+          vigência:         c.data_fim || "",
+          status_orcamento: c.status_orcamento || "",
+          margem_pct:       parseFloat(c.margem_pct) || 0,
+        }));
+        setData(cidades);
+        setLastUpdate(new Date().toLocaleTimeString("pt-BR"));
+        setLoading(false);
+      })
+      .catch(() => {
+        setErro("Não foi possível carregar os dados da planilha.");
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => { carregarDados(); }, []);
+
   const totalSaldo = data.reduce((a,c)=>a+c.saldo,0);
-  const inadimplência = Math.round(data.filter(c=>c.saldo<0).length/data.length*100);
   const embarquesRealizados = data.filter(c=>c.embarque==="REALIZADO").length;
   const lmsAtivos = data.filter(c=>["CONCLUÍDO","POVOANDO"].includes(c.lms)).length;
+  const margemMedia = data.length > 0
+    ? Math.round(data.reduce((a,c)=>a+(100-(c.margem_pct||0)),0)/data.length)
+    : 0;
 
-  const update = (id, field, val) => setData(prev=>prev.map(r=>r.id===id?{...r,[field]:val}:r));
+  const handleSort = col => {
+    if(sortCol===col) setSortDir(d=>d==="asc"?"desc":"asc");
+    else { setSortCol(col); setSortDir("asc"); }
+  };
 
   const filtered = useMemo(()=>{
     const etapaFn = ETAPA_FILTROS.find(e=>e.key===filterEtapa)?.fn;
@@ -136,11 +157,6 @@ export default function App() {
     return d;
   },[data,filterUF,filterConsultor,filterEtapa,sortCol,sortDir]);
 
-  const handleSort = col => {
-    if(sortCol===col) setSortDir(d=>d==="asc"?"desc":"asc");
-    else { setSortCol(col); setSortDir("asc"); }
-  };
-
   const thS = col => ({
     padding:"8px 10px", textAlign:"left", fontSize:11, fontWeight:500,
     color:"#888780", cursor:"pointer", userSelect:"none", whiteSpace:"nowrap",
@@ -149,6 +165,22 @@ export default function App() {
   });
   const tdS = { padding:"8px 10px", fontSize:12, borderBottom:"1px solid #e5e5e3", verticalAlign:"middle" };
   const sortIcon = col => sortCol===col?(sortDir==="asc"?" ↑":" ↓"):"";
+
+  if (loading) return (
+    <div style={{fontFamily:"system-ui,sans-serif",padding:"48px 24px",textAlign:"center",color:"#888780"}}>
+      <div style={{fontSize:32,marginBottom:12}}>⟳</div>
+      <div style={{fontSize:14}}>Carregando dados da planilha...</div>
+    </div>
+  );
+
+  if (erro) return (
+    <div style={{fontFamily:"system-ui,sans-serif",padding:"48px 24px",textAlign:"center"}}>
+      <div style={{fontSize:14,color:"#A32D2D",marginBottom:16}}>{erro}</div>
+      <button onClick={carregarDados} style={{fontSize:13,padding:"8px 16px",borderRadius:8,border:"1px solid #e5e5e3",cursor:"pointer"}}>
+        Tentar novamente
+      </button>
+    </div>
+  );
 
   return (
     <div style={{fontFamily:"system-ui,sans-serif",padding:"24px",maxWidth:1200,margin:"0 auto",background:"#fff",minHeight:"100vh"}}>
@@ -160,8 +192,11 @@ export default function App() {
         </div>
         <div>
           <div style={{fontWeight:600,fontSize:18,color:"#2c2c2a"}}>Painel de Implementação Cactus</div>
-          <div style={{fontSize:13,color:"#888780"}}>Ciclo 2026 · {data.length} municípios</div>
+          <div style={{fontSize:12,color:"#888780"}}>Ciclo 2026 · {data.length} municípios · atualizado às {lastUpdate}</div>
         </div>
+        <button onClick={carregarDados} style={{marginLeft:"auto",fontSize:12,padding:"6px 12px",borderRadius:6,border:"1px solid #e5e5e3",background:"#fff",cursor:"pointer",color:"#888780"}}>
+          ↻ Atualizar
+        </button>
       </div>
 
       {/* KPIs */}
@@ -169,7 +204,7 @@ export default function App() {
         <StatCard label="Total municípios" value={data.length}/>
         <StatCard label="Embarques realizados" value={embarquesRealizados} color="#39B54A" sub={`de ${data.length}`}/>
         <StatCard label="LMS ativos" value={lmsAtivos} color="#2D54C9" sub={`de ${data.length}`}/>
-        <StatCard label="Inadimplência" value={inadimplência+"%"} color={inadimplência>50?"#E24B4A":"#FEAE00"}/>
+        <StatCard label="Margem média" value={margemMedia+"%"} color={margemMedia<20?"#A32D2D":margemMedia<40?"#856404":"#155724"}/>
         <StatCard label="Saldo total" value={"R$"+totalSaldo.toLocaleString("pt-BR")} color={totalSaldo<0?"#E24B4A":"#39B54A"}/>
       </div>
 
@@ -204,7 +239,7 @@ export default function App() {
                   {[
                     [cids.filter(c=>c.embarque==="PENDENTE").length,"embarques pend.","#E24B4A"],
                     [cids.filter(c=>["CONCLUÍDO","POVOANDO"].includes(c.lms)).length,"LMS ativos","#39B54A"],
-                    [cids.filter(c=>c.saldo<0).length,"inadimplentes",cids.filter(c=>c.saldo<0).length>0?"#E24B4A":"#39B54A"],
+                    [cids.filter(c=>c.saldo<0).length,"saldo negativo",cids.filter(c=>c.saldo<0).length>0?"#E24B4A":"#39B54A"],
                   ].map(([v,l,c])=>(
                     <div key={l} style={{textAlign:"center"}}>
                       <div style={{fontSize:20,fontWeight:600,color:c}}>{v}</div>
@@ -244,7 +279,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Filtros secundários + ordenação */}
+        {/* Filtros secundários */}
         <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14,alignItems:"center"}}>
           {[["UF",UFS,filterUF,setFilterUF],["Consultor",CONSULTORES,filterConsultor,setFilterConsultor]].map(([label,opts,val,set])=>(
             <div key={label} style={{display:"flex",alignItems:"center",gap:6}}>
@@ -271,7 +306,7 @@ export default function App() {
 
         {/* Tabela */}
         <div style={{overflowX:"auto",borderRadius:8,border:"1px solid #e5e5e3"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}>
+          <table style={{width:"100%",borderCollapse:"collapse",minWidth:800}}>
             <thead>
               <tr style={{background:"#f5f5f3"}}>
                 {[["cidade","Cidade"],["uf","UF"],["consultor","Consultor"]].map(([col,lbl])=>(
@@ -284,6 +319,7 @@ export default function App() {
                 <th style={thS("progresso")} onClick={()=>handleSort("progresso")}>Progresso{sortIcon("progresso")}</th>
                 <th style={thS("saldo")} onClick={()=>handleSort("saldo")}>Saldo{sortIcon("saldo")}</th>
                 <th style={thS("")}>Vigência</th>
+                <th style={thS("status_orcamento")}>Saúde</th>
               </tr>
             </thead>
             <tbody>
@@ -298,12 +334,12 @@ export default function App() {
                     <td style={{...tdS,fontWeight:600}}>{row.cidade}</td>
                     <td style={tdS}><span style={{fontSize:11,padding:"2px 6px",borderRadius:4,background:"#f5f5f3",fontWeight:600}}>{row.uf}</span></td>
                     <td style={{...tdS,color:"#888780"}}>{row.consultor}</td>
-                    <td style={tdS}><EditableCell value={row.gestor} options={STATUS_OPTS} onChange={v=>update(row.id,"gestor",v)}/></td>
-                    <td style={tdS}><EditableCell value={row.embarque} options={STATUS_OPTS} onChange={v=>update(row.id,"embarque",v)}/></td>
-                    <td style={tdS}><EditableCell value={row.lms} options={STATUS_OPTS} onChange={v=>update(row.id,"lms",v)}/></td>
+                    <td style={tdS}><Badge value={row.gestor}/></td>
+                    <td style={tdS}><Badge value={row.embarque}/></td>
+                    <td style={tdS}><Badge value={row.lms}/></td>
                     <td style={tdS}>
                       <div style={{display:"flex",flexDirection:"column",gap:3}}>
-                        <EditableCell value={row.avSond} options={STATUS_OPTS} onChange={v=>update(row.id,"avSond",v)}/>
+                        <Badge value={row.avSond}/>
                         {row.avSondTipo&&<Badge value={row.avSondTipo}/>}
                       </div>
                     </td>
@@ -315,6 +351,7 @@ export default function App() {
                       {!row.vigência?"—":row.vigência}
                       {vigVenc&&<span style={{marginLeft:4}}>⚠</span>}
                     </td>
+                    <td style={tdS}><SaudeBadge value={row.status_orcamento}/></td>
                   </tr>
                 );
               })}
@@ -322,7 +359,7 @@ export default function App() {
           </table>
         </div>
         <div style={{marginTop:10,fontSize:11,color:"#888780"}}>
-          Clique em qualquer badge colorido para editar o status diretamente.
+          Dados carregados da planilha Google Sheets em tempo real.
         </div>
       </>}
     </div>
