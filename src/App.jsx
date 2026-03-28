@@ -141,8 +141,12 @@ export default function App() {
   useEffect(() => { carregarDados(); }, []);
 
   const totalSaldo = data.reduce((a,c)=>a+c.saldo,0);
-  const embarquesRealizados = data.filter(c=>c.embarque==="REALIZADO").length;
-  const lmsAtivos = data.filter(c=>["CONCLUÍDO","POVOANDO"].includes(c.lms)).length;
+  const embarquesRealizados = data.filter(c=>
+    ["REALIZADO","CONCLUÍDO"].includes(c.embarque)
+  ).length;
+  const lmsAtivos = data.filter(c=>
+    ["CONCLUÍDO","POVOANDO","SOLICITADO"].includes(c.lms)
+  ).length;
   const margemMedia = data.length > 0
     ? Math.round(data.reduce((a,c)=>a+(100-(c.margem_pct||0)),0)/data.length)
     : 0;
@@ -360,7 +364,7 @@ export default function App() {
                     </td>
                     <td style={{...tdS,minWidth:100}}><ProgressBar data={row}/></td>
                     <td style={{...tdS,color:saldoColor,fontWeight:600,fontSize:12}}>
-                      {row.saldo===0?"—":"R$"+row.saldo.toLocaleString("pt-BR")}
+                      {row.saldo===0?"—":"R$"+Math.round(row.saldo).toLocaleString("pt-BR")}
                     </td>
                     <td style={{...tdS,fontSize:11,color:vigVenc?"#E24B4A":"#888780"}}>
                       {!row.vigência?"—":row.vigência}
