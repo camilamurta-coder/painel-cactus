@@ -14,6 +14,7 @@ const STATUS_CONFIG = {
   "FINALIZADA":   { color: "#39B54A", bg: "#EAF3DE", label: "Finalizada" },
   "ONLINE":       { color: "#2D54C9", bg: "#E6F1FB", label: "Online" },
   "FÍSICA":       { color: "#884FCB", bg: "#EEEDFE", label: "Física" },
+  "EM ANDAMENTO": { color: "#2D54C9", bg: "#E6F1FB", label: "Em andamento" },
 };
 
 const STEPS = ["gestor","embarque","lms","avSond"];
@@ -103,7 +104,7 @@ export default function App() {
     window[callbackName] = (json) => {
       try {
         const cidades = (json.cidades || []).map((c, i) => ({
-          id: i + 1,
+          id:               i + 1,
           cidade:           c.cidade || "",
           uf:               c.uf || "",
           consultor:        c.consultor || "",
@@ -116,6 +117,7 @@ export default function App() {
           vigência:         c.data_fim || "",
           status_orcamento: c.status_orcamento || "",
           margem_pct:       parseFloat(c.margem_pct) || 0,
+          alerta_vigencia:  c.alerta_vigencia || "",
         }));
         setData(cidades);
         setLastUpdate(new Date().toLocaleTimeString("pt-BR"));
@@ -141,12 +143,13 @@ export default function App() {
   useEffect(() => { carregarDados(); }, []);
 
   const totalSaldo = data.reduce((a,c)=>a+c.saldo,0);
-  const embarquesRealizados = data.filter(c=>
-    ["REALIZADO","CONCLUÍDO"].includes(c.embarque)
-  ).length;
-  const lmsAtivos = data.filter(c=>
-    ["CONCLUÍDO","POVOANDO","SOLICITADO"].includes(c.lms)
-  ).length;
+
+  // Embarques ok: CONCLUÍDO (igual ao critério do Sheets)
+  const embarquesOk = data.filter(c => c.embarque === "CONCLUÍDO").length;
+
+  // LMS ok: CONCLUÍDO (igual ao KPI do Sheets)
+  const lmsOk = data.filter(c => c.lms === "CONCLUÍDO").length;
+
   const margemMedia = data.length > 0
     ? Math.round(data.reduce((a,c)=>a+(100-(c.margem_pct||0)),0)/data.length)
     : 0;
@@ -220,11 +223,11 @@ export default function App() {
 
       {/* KPIs */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:24}}>
-        <StatCard label="Total municípios" value={data.length}/>
-        <StatCard label="Embarques realizados" value={embarquesRealizados} color="#39B54A" sub={`de ${data.length}`}/>
-        <StatCard label="LMS ativos" value={lmsAtivos} color="#2D54C9" sub={`de ${data.length}`}/>
-        <StatCard label="Margem média" value={margemMedia+"%"} color={margemMedia<20?"#A32D2D":margemMedia<40?"#856404":"#155724"}/>
-        <StatCard label="Saldo total" value={"R$"+totalSaldo.toLocaleString("pt-BR")} color={totalSaldo<0?"#E24B4A":"#39B54A"}/>
+        <StatCard label="Total municípios"   value={data.length}/>
+        <StatCard label="Embarques ok"       value={embarquesOk}  color="#39B54A" sub={`de ${data.length}`}/>
+        <StatCard label="LMS ok"             value={lmsOk}        color="#2D54C9" sub={`de ${data.length}`}/>
+        <StatCard label="Margem média"       value={margemMedia+"%"} color={margemMedia<20?"#A32D2D":margemMedia<40?"#856404":"#155724"}/>
+        <StatCard label="Saldo total"        value={"R$"+totalSaldo.toLocaleString("pt-BR")} color={totalSaldo<0?"#E24B4A":"#39B54A"}/>
       </div>
 
       {/* Tabs */}
@@ -257,7 +260,7 @@ export default function App() {
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                   {[
                     [cids.filter(c=>c.embarque==="PENDENTE").length,"embarques pend.","#E24B4A"],
-                    [cids.filter(c=>["CONCLUÍDO","POVOANDO"].includes(c.lms)).length,"LMS ativos","#39B54A"],
+                    [cids.filter(c=>c.lms==="CONCLUÍDO").length,"LMS ok","#39B54A"],
                     [cids.filter(c=>c.saldo<0).length,"saldo negativo",cids.filter(c=>c.saldo<0).length>0?"#E24B4A":"#39B54A"],
                   ].map(([v,l,c])=>(
                     <div key={l} style={{textAlign:"center"}}>
@@ -337,17 +340,19 @@ export default function App() {
                 <th style={thS("avSond")}>Av. Sondagem</th>
                 <th style={thS("progresso")} onClick={()=>handleSort("progresso")}>Progresso{sortIcon("progresso")}</th>
                 <th style={thS("saldo")} onClick={()=>handleSort("saldo")}>Saldo{sortIcon("saldo")}</th>
-                <th style={thS("")}>Vigência</th>
+                <th style={{...thS(""),minWidth:90}}>Vigência</th>
                 <th style={thS("status_orcamento")}>Saúde</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((row,i)=>{
                 const saldoColor=row.saldo<0?"#E24B4A":row.saldo===0?"#888780":"#39B54A";
-                const vigVenc=row.vigência&&(()=>{
-                  const [d,m,y]=row.vigência.split("/").map(Number);
-                  return new Date(y,m-1,d)<new Date();
-                })();
+
+                // Alerta de vigência vindo da planilha
+                const alerta = row.alerta_vigencia;
+                const alertaColor = alerta==="VENCIDO"?"#3C3489":alerta==="ENVIAR OFÍCIO"?"#A32D2D":alerta==="REUNIÃO DE RESULTADO"?"#856404":"#888780";
+                const alertaBg   = alerta==="VENCIDO"?"#EEEDFE":alerta==="ENVIAR OFÍCIO"?"#FDECEA":alerta==="REUNIÃO DE RESULTADO"?"#FFF3CD":"transparent";
+
                 return (
                   <tr key={row.id} style={{background:i%2===0?"#fff":"#fafaf8"}}>
                     <td style={{...tdS,fontWeight:600}}>{row.cidade}</td>
@@ -366,9 +371,15 @@ export default function App() {
                     <td style={{...tdS,color:saldoColor,fontWeight:600,fontSize:12}}>
                       {row.saldo===0?"—":"R$"+Math.round(row.saldo).toLocaleString("pt-BR")}
                     </td>
-                    <td style={{...tdS,fontSize:11,color:vigVenc?"#E24B4A":"#888780"}}>
-                      {!row.vigência?"—":row.vigência}
-                      {vigVenc&&<span style={{marginLeft:4}}>⚠</span>}
+                    <td style={{...tdS,fontSize:11,minWidth:90}}>
+                      <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                        <span style={{color:"#888780"}}>{row.vigência||"—"}</span>
+                        {alerta&&(
+                          <span style={{fontSize:10,padding:"1px 5px",borderRadius:3,background:alertaBg,color:alertaColor,fontWeight:600}}>
+                            {alerta}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td style={tdS}><SaudeBadge value={row.status_orcamento}/></td>
                   </tr>
