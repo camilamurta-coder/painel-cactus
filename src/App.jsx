@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 
-const SHEETS_URL = "https://script.google.com/macros/s/AKfycbz2pGNXA3ooyqlqhKMg0SrI0AIaa3MfNRtMQH888Wr5Nqobf6dXkPlQIzeDqajiaeO8/exec";
+const SHEETS_URL = "/.netlify/functions/dados";
 
 const STATUS_CONFIG = {
   "ALOCADO":      { color: "#39B54A", bg: "#EAF3DE", label: "Alocado" },
@@ -94,13 +94,9 @@ export default function App() {
   const carregarDados = () => {
     setLoading(true);
     setErro(null);
-
-    const callbackName = "cactusCallback_" + Date.now();
-    const script = document.createElement("script");
-    script.src = SHEETS_URL + "?callback=" + callbackName + "&t=" + Date.now();
-
-    window[callbackName] = (json) => {
-      try {
+    fetch(SHEETS_URL + "?t=" + Date.now())
+      .then(r => r.json())
+      .then(json => {
         const cidades = (json.cidades || []).map((c, i) => ({
           id:               i + 1,
           cidade:           c.cidade || "",
@@ -121,22 +117,11 @@ export default function App() {
         setData(cidades);
         setLastUpdate(new Date().toLocaleTimeString("pt-BR"));
         setLoading(false);
-      } catch(err) {
-        setErro("Erro ao processar os dados.");
+      })
+      .catch(() => {
+        setErro("Não foi possível carregar os dados da planilha.");
         setLoading(false);
-      }
-      delete window[callbackName];
-      if (document.body.contains(script)) document.body.removeChild(script);
-    };
-
-    script.onerror = () => {
-      setErro("Não foi possível carregar os dados da planilha.");
-      setLoading(false);
-      delete window[callbackName];
-      if (document.body.contains(script)) document.body.removeChild(script);
-    };
-
-    document.body.appendChild(script);
+      });
   };
 
   useEffect(() => { carregarDados(); }, []);
