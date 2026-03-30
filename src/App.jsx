@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 
-const SHEETS_URL = "https://script.google.com/a/macros/associacaocactus.com.br/s/AKfycbxRaNGyDAorF9sUQz1nBsKGcpGY22V1KccLa7et7MKEH3-1x6LUQ7TRPTjcDaW8hCA7/exec";
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxRaNGyDAorF9sUQz1nBsKGcpGY22V1KccLa7et7MKEH3-1x6LUQ7TRPTjcDaW8hCA7/exec";
 
 const STATUS_CONFIG = {
   "ALOCADO":      { color: "#39B54A", bg: "#EAF3DE", label: "Alocado" },
