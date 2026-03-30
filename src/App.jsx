@@ -99,7 +99,7 @@ export default function App() {
 
     const callbackName = "cactusCallback_" + Date.now();
     const script = document.createElement("script");
-    script.src = SHEETS_URL + "?callback=" + callbackName;
+    script.src = SHEETS_URL + "?callback=" + callbackName + "&t=" + Date.now();
 
     window[callbackName] = (json) => {
       try {
