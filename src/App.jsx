@@ -57,9 +57,7 @@ function SaudeBadge({ value }) {
   );
 }
 
-function ProgressBar({ data }) {
-  const done = STEPS.filter(s => ["REALIZADO","CONCLUÍDO","ALOCADO","FINALIZADA","POVOANDO"].includes(data[s])).length;
-  const pct = Math.round((done/STEPS.length)*100);
+function ProgressBar({ pct }) {
   const color = pct===100 ? "#39B54A" : pct>=50 ? "#FEAE00" : "#E24B4A";
   return (
     <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -97,12 +95,9 @@ export default function App() {
     setLoading(true);
     setErro(null);
 
-    const callbackName = "cactusCallback_" + Date.now();
-    const script = document.createElement("script");
-    script.src = SHEETS_URL + "?callback=" + callbackName + "&t=" + Date.now();
-
-    window[callbackName] = (json) => {
-      try {
+    fetch(SHEETS_URL + "?t=" + Date.now())
+      .then(r => r.json())
+      .then(json => {
         const cidades = (json.cidades || []).map((c, i) => ({
           id:               i + 1,
           cidade:           c.cidade || "",
@@ -118,26 +113,16 @@ export default function App() {
           status_orcamento: c.status_orcamento || "",
           margem_pct:       parseFloat(c.margem_pct) || 0,
           alerta_vigencia:  c.alerta_vigencia || "",
+          progresso_pct:    parseFloat(c.progresso_pct) || 0,
         }));
         setData(cidades);
         setLastUpdate(new Date().toLocaleTimeString("pt-BR"));
         setLoading(false);
-      } catch {
-        setErro("Erro ao processar os dados.");
+      })
+      .catch(() => {
+        setErro("Não foi possível carregar os dados da planilha.");
         setLoading(false);
-      }
-      delete window[callbackName];
-      document.body.removeChild(script);
-    };
-
-    script.onerror = () => {
-      setErro("Não foi possível carregar os dados da planilha.");
-      setLoading(false);
-      delete window[callbackName];
-      document.body.removeChild(script);
-    };
-
-    document.body.appendChild(script);
+      });
   };
 
   useEffect(() => { carregarDados(); }, []);
@@ -367,7 +352,7 @@ export default function App() {
                         {row.avSondTipo&&<Badge value={row.avSondTipo}/>}
                       </div>
                     </td>
-                    <td style={{...tdS,minWidth:100}}><ProgressBar data={row}/></td>
+                    <td style={{...tdS,minWidth:100}}><ProgressBar pct={row.progresso_pct}/></td>
                     <td style={{...tdS,color:saldoColor,fontWeight:600,fontSize:12}}>
                       {row.saldo===0?"—":"R$"+Math.round(row.saldo).toLocaleString("pt-BR")}
                     </td>
